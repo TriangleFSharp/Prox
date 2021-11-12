@@ -4,93 +4,81 @@ open Feliz
 open Elmish
 open Shared
 
-type State = { Counter: Deferred<Result<Counter, string>> }
+type LoginPageState = {
+  userName : string
+}
+type CallPageState = {
+  userName : string
+  userToCall : string
+}
+
+type State = 
+  | LoginPage of LoginPageState
+  | CallPage of CallPageState
+
+type AudioType =
+  | Local
+  | Remote
 
 type Msg =
-    | Increment
-    | Decrement
-    | LoadCounter of AsyncOperationStatus<Result<Counter, string>>
+  | UpdateUser of string
+  | Login
+  | Call
+  | PlayAudio of AudioType
+  | StopAudio
 
-let init() = { Counter = HasNotStartedYet }, Cmd.ofMsg (LoadCounter Started)
+let init() = { userName = "" }, Cmd.none
 
 let update (msg: Msg) (state: State) =
-    match msg with
-    | LoadCounter Started ->
-        let loadCounter = async {
-            try
-                let! counter = Server.api.Counter()
-                return LoadCounter (Finished (Ok counter))
-            with error ->
-                Log.developmentError error
-                return LoadCounter (Finished (Error "Error while retrieving Counter from server"))
-        }
-
-        { state with Counter = InProgress }, Cmd.fromAsync loadCounter
-
-    | LoadCounter (Finished counter) ->
-        { state with Counter = Resolved counter }, Cmd.none
-
-    | Increment ->
-        let updatedCounter =
-            state.Counter
-            |> Deferred.map (function
-                | Ok counter -> Ok { counter with value = counter.value + 1 }
-                | Error error -> Error error)
-
-        { state with Counter = updatedCounter }, Cmd.none
-
-    | Decrement ->
-        let updatedCounter =
-            state.Counter
-            |> Deferred.map (function
-                | Ok counter -> Ok { counter with value = counter.value - 1 }
-                | Error error -> Error error)
-
-        { state with Counter = updatedCounter }, Cmd.none
-
-let renderCounter (counter: Deferred<Result<Counter, string>>)=
-    match counter with
-    | HasNotStartedYet -> Html.none
-    | InProgress -> Html.h1 "Loading..."
-    | Resolved (Ok counter) -> Html.h1 counter.value
-    | Resolved (Error errorMsg) ->
-        Html.h1 [
-            prop.style [ style.color.crimson ]
-            prop.text errorMsg
-        ]
+    match msg, state with
+    | UpdateUser user, LoginPage lp -> LoginPage { lp with userName = user }, Cmd.none
+    | Login, LoginPage lp -> CallPage { userName = lp.userName; userToCall = "" }, Cmd.none
+    | UpdateUser user, CallPage cp -> CallPage { cp with userToCall = user }, Cmd.none
+    | Call, _ -> state, Cmd.none
+    | _ -> state, Cmd.none
 
 let fableLogo() = StaticFile.import "./imgs/fable_logo.png"
 
 let render (state: State) (dispatch: Msg -> unit) =
-
-    Html.div [
-        prop.style [
-            style.textAlign.center
-            style.padding 40
-        ]
-
+  Html.div [
+    prop.classes [ "min-h-screen"; "bg-gray-100"; "py-6"; "flex"; "flex-col"; "justify-center"; "sm:py-12" ]
+    prop.children [
+      Html.div [
+        prop.classes [ "relative"; "py-3"; "sm:max-w-xl"; "sm:mx-auto" ]
         prop.children [
-
-            Html.img [
-                prop.src(fableLogo())
-                prop.width 250
+          Html.div [
+            prop.classes [ "absolute"; "inset-0"; "bg-gradient-to-r"; "from-blue-400"; "to-blue-800"; "shadow-lg"; "transform"; "-skew-y-6"; "sm:skew-y-0"; "sm:-rotate-6"; "sm:rounded-3xl" ]
+          ]
+          Html.div [
+            prop.classes [ "relative"; "px-4"; "py-10"; "bg-white"; "shadow-lg"; "sm:rounded-3xl"; "sm:p-20" ]
+            prop.children [
+              Html.div [
+                prop.classes [ "max-w-md"; "mx-auto" ]
+                prop.children [
+                  Html.div [
+                    Html.img [
+                      prop.src ( fableLogo() )
+                      prop.classes [ "h-7"; "sm:h-8" ]
+                    ]
+                  ]
+                  Html.div [
+                    prop.classes [ "divide-y"; "divide-gray-200" ]
+                    prop.children [
+                      Html.div [
+                        prop.classes [ "py-8"; "text-base"; "leading-6"; "space-y-4"; "text-gray-700"; "sm:text-lg"; "sm:leading-7" ]
+                        prop.children [
+                          Html.a [prop.href "#"; prop.text "SAFE-Stack"]
+                          Html.p "+"
+                          Html.a [prop.href "#"; prop.content "SAFE"]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
             ]
-
-            Html.h1 "Full-Stack Counter"
-
-            Html.button [
-                prop.className "bg-blue-500 h-10 w-20 rounded text-gray-50"
-                prop.style [ style.margin 5; style.padding 15; ]
-                prop.onClick (fun _ -> dispatch Increment)
-                prop.text "Increment"
-            ]
-
-            Html.button [
-                prop.style [ style.margin 5; style.padding 15 ]
-                prop.onClick (fun _ -> dispatch Decrement)
-                prop.text "Decrement"
-            ]
-
-            renderCounter state.Counter
+          ]
         ]
+      ]
     ]
+  ]
