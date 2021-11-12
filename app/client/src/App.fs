@@ -6,7 +6,9 @@ open Shared
 
 type LoginPageState = {
   userName : string
+  error: bool
 }
+
 type CallPageState = {
   userName : string
   userToCall : string
@@ -27,17 +29,47 @@ type Msg =
   | PlayAudio of AudioType
   | StopAudio
 
-let init() = { userName = "" }, Cmd.none
+let init() = LoginPage { userName = "" ; error = false }, Cmd.none
 
 let update (msg: Msg) (state: State) =
     match msg, state with
     | UpdateUser user, LoginPage lp -> LoginPage { lp with userName = user }, Cmd.none
-    | Login, LoginPage lp -> CallPage { userName = lp.userName; userToCall = "" }, Cmd.none
+    | Login, LoginPage lp -> 
+      if lp.userName = "" then LoginPage { lp with error = true }, Cmd.none
+      else CallPage { userName = lp.userName; userToCall = "" }, Cmd.none
     | UpdateUser user, CallPage cp -> CallPage { cp with userToCall = user }, Cmd.none
     | Call, _ -> state, Cmd.none
     | _ -> state, Cmd.none
 
 let fableLogo() = StaticFile.import "./imgs/fable_logo.png"
+
+let renderLoginPage (state:LoginPageState) dispatch =
+  Html.div [
+    prop.classes [ "p-8"; "space-y-4"; "text-gray-800"; "leading-7" ; "border-0"; "flex"; "flex-col" ]
+    prop.children [
+      Html.h1 [
+        prop.className "font-bold"
+        prop.text "Sign in to Chat"
+      ]
+      Html.input [
+        prop.classes ["border-2"; "px-1"; if state.error then "border-red-400" ]
+        prop.placeholder "Enter Username"
+        prop.type' "text"
+        prop.onTextChange (fun s -> dispatch <| UpdateUser s)
+      ]
+      Html.button [
+        prop.className "border-2 rounded-lg bg-yellow-50"
+        prop.text "Sign in"
+        prop.onClick (fun _ -> dispatch Login)
+      ]
+    ]
+  ]
+
+let renderCallPage (state:CallPageState) dispatch =
+  Html.div [
+    prop.text state.userName
+  ]
+
 
 let render (state: State) (dispatch: Msg -> unit) =
   Html.div [
@@ -62,16 +94,11 @@ let render (state: State) (dispatch: Msg -> unit) =
                     ]
                   ]
                   Html.div [
-                    prop.classes [ "divide-y"; "divide-gray-200" ]
+                    prop.classes [ "divide-y"; "divide-gray-200"]
                     prop.children [
-                      Html.div [
-                        prop.classes [ "py-8"; "text-base"; "leading-6"; "space-y-4"; "text-gray-700"; "sm:text-lg"; "sm:leading-7" ]
-                        prop.children [
-                          Html.a [prop.href "#"; prop.text "SAFE-Stack"]
-                          Html.p "+"
-                          Html.a [prop.href "#"; prop.content "SAFE"]
-                        ]
-                      ]
+                      match state with
+                      | LoginPage p -> renderLoginPage p dispatch
+                      | CallPage p ->  renderCallPage p dispatch
                     ]
                   ]
                 ]

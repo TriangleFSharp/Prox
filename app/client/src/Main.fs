@@ -14,7 +14,8 @@ open Elmish.HMR
 Program.mkProgram App.init App.update App.render
 //-:cnd:noEmit
 #if DEBUG
-|> Program.withDebugger
+// |> Program.withDebugger
+|> Program.withConsoleTrace
 #endif
 //+:cnd:noEmit
 |> Program.withReactSynchronous "feliz-app"
