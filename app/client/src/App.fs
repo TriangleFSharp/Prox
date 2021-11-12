@@ -43,8 +43,16 @@ let update (msg: Msg) (state: State) =
 
 let fableLogo() = StaticFile.import "./imgs/fable_logo.png"
 
+let renderbutton (text:string) (color:string) clicky =
+  Html.button [
+    prop.className (sprintf "bg-%s-500 hover:bg-%s-700 text-white font-bold py-2 px-4 rounded" color color)
+    prop.text text
+    prop.onClick clicky
+  ]
+
 let renderLoginPage (state:LoginPageState) dispatch =
-  Html.div [
+  Html.form [
+    prop.onSubmit (fun _ -> dispatch Login)
     prop.classes [ "p-8"; "space-y-4"; "text-gray-800"; "leading-7" ; "border-0"; "flex"; "flex-col" ]
     prop.children [
       Html.h1 [
@@ -67,7 +75,39 @@ let renderLoginPage (state:LoginPageState) dispatch =
 
 let renderCallPage (state:CallPageState) dispatch =
   Html.div [
-    prop.text state.userName
+    prop.className "p-8 space-y-4 text-gray-700 border-4 flex flex-col"
+    prop.children [
+      Html.div [
+        prop.children[
+          Html.text "Local Audio"
+          Html.audio [
+            prop.controls true
+            prop.autoPlay true
+          ]
+        ]
+      ]
+      Html.div [
+        prop.children[
+          Html.text "Remote Audio"
+          Html.audio [
+            prop.controls true
+            prop.autoPlay true
+          ]
+        ]
+      ]
+      Html.div [
+        prop.className "flex justify-center space-x-4"
+        prop.children [
+          Html.input [
+            prop.type' "text"
+            prop.className "border-2 border-gray-500 w-32 px-1"
+            prop.placeholder "User to call"
+          ]
+          renderbutton "Call" "blue" ignore
+          renderbutton "Hangup" "red" ignore
+        ]
+      ]
+    ]
   ]
 
 
