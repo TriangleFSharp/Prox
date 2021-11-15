@@ -9,12 +9,14 @@ type LoginPageState = {
   error: bool
 }
 
+type ChannelId = System.Guid
 type Channel = {
+  id : ChannelId
   name : string
-  enable : bool
+  volume : float
 }
 
-let mkChannel name = { Channel.name = name; enable = false }
+let mkChannel name = { id = System.Guid.NewGuid(); Channel.name = name; volume = 0. }
 
 type CallPageState = {
   userName : string
@@ -33,9 +35,10 @@ type Msg =
   | UpdateUser of string
   | Login
   | ToggleChannel of string
+  | SetVolume of channelId:string * value:float
 
 let sampleChannels = 
-  [1..5] 
+  [1..7] 
   |> Seq.map (sprintf "Channel %i") 
   |> Seq.map mkChannel 
   |> Seq.toList
@@ -84,7 +87,7 @@ let renderLoginPage (state:LoginPageState) dispatch =
 
 let renderChannel (channel:Channel) =
   Html.div [ 
-    prop.classes ["border-2 w-16 h-16 text-center text-white";if channel.enable then "bg-green-500 font-bold" else "bg-red-500"; ]
+    prop.classes ["border-2 w-16 h-16 text-center text-white";if channel.volume > 0. then "bg-green-500 font-bold" else "bg-red-500"; ]
     prop.children [
       Html.span [ prop.text channel.name; prop.className "px-1" ]
       Html.input [
@@ -106,14 +109,7 @@ let renderCallPage (state:CallPageState) dispatch =
     Html.div [
       prop.className "flex flex-wrap w-96 space-x-0 my-8"
       prop.children [
-        renderChannel ({ Channel.name = "Client 1"; enable = true })
-        renderChannel ({ Channel.name = "Client 2"; enable = false })
-        renderChannel ({ Channel.name = "Client 3"; enable = false })
-        renderChannel ({ Channel.name = "Client 4"; enable = false })
-        renderChannel ({ Channel.name = "Client 5"; enable = false })
-        renderChannel ({ Channel.name = "Client 6"; enable = false })
-        renderChannel ({ Channel.name = "Client 7"; enable = false })
-        renderChannel ({ Channel.name = "Client 8"; enable = false })
+        for ch in state.channels do renderChannel ch
       ]
     ]
     renderbutton "Press to Talk" "green" ignore
