@@ -9,9 +9,16 @@ type LoginPageState = {
   error: bool
 }
 
+type Channel = {
+  name : string
+  enable : bool
+}
+
+let mkChannel name = { Channel.name = name; enable = false }
+
 type CallPageState = {
   userName : string
-  userToCall : string
+  channels : Channel list
 }
 
 type State = 
@@ -25,9 +32,13 @@ type AudioType =
 type Msg =
   | UpdateUser of string
   | Login
-  | Call
-  | PlayAudio of AudioType
-  | StopAudio
+  | ToggleChannel of string
+
+let sampleChannels = 
+  [1..5] 
+  |> Seq.map (sprintf "Channel %i") 
+  |> Seq.map mkChannel 
+  |> Seq.toList
 
 let init() = LoginPage { userName = "" ; error = false }, Cmd.none
 
@@ -36,8 +47,7 @@ let update (msg: Msg) (state: State) =
     | UpdateUser user, LoginPage lp -> LoginPage { lp with userName = user }, Cmd.none
     | Login, LoginPage lp -> 
       if lp.userName = "" then LoginPage { lp with error = true }, Cmd.none
-      else CallPage { userName = lp.userName; userToCall = "" }, Cmd.none
-    | UpdateUser user, CallPage cp -> CallPage { cp with userToCall = user }, Cmd.none
+      else CallPage { userName = lp.userName; channels = mkChannel lp.userName :: sampleChannels  }, Cmd.none
     | Call, _ -> state, Cmd.none
     | _ -> state, Cmd.none
 
@@ -74,42 +84,10 @@ let renderLoginPage (state:LoginPageState) dispatch =
   ]
 
 let renderCallPage (state:CallPageState) dispatch =
+  // New idea: Lets show each user in a box and let you toggle them on/off
+  // Step 2 would be to show a volume slider <input type="range" min=0 max=100 value=7 step=5 />
   Html.div [
-    prop.className "p-8 space-y-4 text-gray-700 border-4 flex flex-col"
-    prop.children [
-      Html.div [
-        prop.children[
-          Html.text "Local Audio"
-          Html.audio [
-            prop.controls true
-            prop.autoPlay true
-          ]
-        ]
-      ]
-      Html.div [
-        prop.children[
-          Html.text "Remote Audio"
-          Html.audio [
-            prop.controls true
-            prop.autoPlay true
-          ]
-        ]
-      ]
-      Html.div [
-        prop.className "flex justify-center space-x-4"
-        prop.children [
-          Html.input [
-            prop.type' "text"
-            prop.className "border-2 border-gray-500 w-32 px-1"
-            prop.placeholder "User to call"
-          ]
-          renderbutton "Call" "blue" ignore
-          renderbutton "Hangup" "red" ignore
-        ]
-      ]
-    ]
   ]
-
 
 let render (state: State) (dispatch: Msg -> unit) =
   Html.div [
