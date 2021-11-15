@@ -48,7 +48,6 @@ let update (msg: Msg) (state: State) =
     | Login, LoginPage lp -> 
       if lp.userName = "" then LoginPage { lp with error = true }, Cmd.none
       else CallPage { userName = lp.userName; channels = mkChannel lp.userName :: sampleChannels  }, Cmd.none
-    | Call, _ -> state, Cmd.none
     | _ -> state, Cmd.none
 
 let fableLogo() = StaticFile.import "./imgs/fable_logo.png"
@@ -83,11 +82,43 @@ let renderLoginPage (state:LoginPageState) dispatch =
     ]
   ]
 
+let renderChannel (channel:Channel) =
+  Html.div [ 
+    prop.classes ["border-2 w-16 h-16 text-center text-white";if channel.enable then "bg-green-500 font-bold" else "bg-red-500"; ]
+    prop.children [
+      Html.span [ prop.text channel.name; prop.className "px-1" ]
+      Html.input [
+        prop.type' "range"
+        prop.className "w-16"
+        prop.min 0
+        prop.max 100
+        prop.step 5
+        // prop.value (if channel.enable then 100 else 0)
+      ]
+    ]
+  ]
+
 let renderCallPage (state:CallPageState) dispatch =
   // New idea: Lets show each user in a box and let you toggle them on/off
   // Step 2 would be to show a volume slider <input type="range" min=0 max=100 value=7 step=5 />
   Html.div [
+    prop.children [
+    Html.div [
+      prop.className "flex flex-wrap w-96 space-x-0 my-8"
+      prop.children [
+        renderChannel ({ Channel.name = "Client 1"; enable = true })
+        renderChannel ({ Channel.name = "Client 2"; enable = false })
+        renderChannel ({ Channel.name = "Client 3"; enable = false })
+        renderChannel ({ Channel.name = "Client 4"; enable = false })
+        renderChannel ({ Channel.name = "Client 5"; enable = false })
+        renderChannel ({ Channel.name = "Client 6"; enable = false })
+        renderChannel ({ Channel.name = "Client 7"; enable = false })
+        renderChannel ({ Channel.name = "Client 8"; enable = false })
+      ]
+    ]
+    renderbutton "Press to Talk" "green" ignore
   ]
+]
 
 let render (state: State) (dispatch: Msg -> unit) =
   Html.div [
